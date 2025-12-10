@@ -1,0 +1,29 @@
+let
+    CheckCodeInSNOMEDValueSet = (snomedCode as text, valueSetUrl as text) as text =>
+        let
+            // Build the URL for FHIR $validate-code operation
+            baseUrl = "https://tx.ontoserver.csiro.au/fhir/ValueSet/$validate-code",
+            snomedSystem = "http://snomed.info/sct",
+            
+            fullUrl = baseUrl & 
+                      "?url=" & Uri.EscapeDataString(valueSetUrl) & 
+                      "&code=" & Uri.EscapeDataString(snomedCode) & 
+                      "&system=" & Uri.EscapeDataString(snomedSystem),
+            
+            // Make the API call
+            response = try Json.Document(Web.Contents(fullUrl)) otherwise null,
+            
+            // Extract the result parameter
+            result = if response = null then 
+                        "Error" 
+                     else 
+                        let
+                            parameters = response[parameter],
+                            resultParam = List.First(List.Select(parameters, each [name] = "result")),
+                            isInValueSet = resultParam[valueBoolean]
+                        in
+                            if isInValueSet = true then "Yes" else "No"
+        in
+            result
+in
+    CheckCodeInValueSet
