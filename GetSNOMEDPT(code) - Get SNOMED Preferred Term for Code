@@ -1,0 +1,67 @@
+let
+    GetSNOMEDPT = (snomedCode as text) as text =>
+        let
+            // Build the $lookup URL
+            baseUrl = "https://tx.ontoserver.csiro.au/fhir/CodeSystem/$lookup",
+            snomedSystem = "http://snomed.info/sct",
+            
+            fullUrl = baseUrl & 
+                      "?system=" & Uri.EscapeDataString(snomedSystem) & 
+                      "&code=" & snomedCode,
+            
+            // Make the API call
+            response = try Json.Document(Web.Contents(fullUrl)) otherwise null,
+            
+            // Extract the display term
+            term = if response = null then 
+                      "Error" 
+                   else 
+                      let
+                          // First try to get AU preferred term from designations
+                          parameters = response[parameter],
+                          
+                          // Look for designation parameter
+                          designationParam = try List.First(
+                              List.Select(parameters, each [name] = "designation")
+                          ) otherwise null,
+                          
+                          // Get AU preferred term if available
+                          auTerm = if designationParam <> null then
+                                      let
+                                          parts = designationParam[part],
+                                          // Look for language = en-AU or use = preferred
+                                          langParts = List.Select(parts, 
+                                              each [name] = "language" and 
+                                              Text.Contains([valueCode], "AU", Comparer.OrdinalIgnoreCase)),
+                                          useParts = List.Select(parts, 
+                                              each [name] = "use")
+                                      in
+                                          if List.Count(langParts) > 0 then
+                                              let
+                                                  valuePart = List.First(
+                                                      List.Select(parts, each [name] = "value")
+                                                  )
+                                              in
+                                                  valuePart[valueString]
+                                          else
+                                              null
+                                   else
+                                      null,
+                          
+                          // Fallback to display parameter if no AU designation
+                          displayParam = try List.First(
+                              List.Select(parameters, each [name] = "display")
+                          ) otherwise null,
+                          
+                          finalTerm = if auTerm <> null then 
+                                         auTerm 
+                                      else if displayParam <> null then 
+                                         displayParam[valueString]
+                                      else
+                                         "Not found"
+                      in
+                          finalTerm
+        in
+            term
+in
+    GetSNOMEDTerm
