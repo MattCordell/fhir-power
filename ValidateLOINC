@@ -1,0 +1,25 @@
+let
+    ValidateLOINC = (loincCode as text) as text =>
+        let
+            // Build the URL for FHIR $lookup operation
+            baseUrl = "https://tx.ontoserver.csiro.au/fhir/CodeSystem/$lookup",
+            loincSystem = "http://loinc.org",
+            
+            fullUrl = baseUrl & 
+                      "?system=" & Uri.EscapeDataString(loincSystem) & 
+                      "&code=" & Uri.EscapeDataString(loincCode),
+            
+            // Make the API call
+            response = try Json.Document(Web.Contents(fullUrl)) otherwise null,
+            
+            // Check if we got a valid response
+            result = if response = null then 
+                        "Invalid" 
+                     else if Record.HasFields(response, "resourceType") and response[resourceType] = "Parameters" then
+                        "Valid"
+                     else 
+                        "Invalid"
+        in
+            result
+in
+    CheckLOINCCode
