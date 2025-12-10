@@ -1,0 +1,15 @@
+let
+    // Expand the ValueSet to get all codes
+    expansionUrl = "https://tx.ontoserver.csiro.au/fhir/ValueSet/$expand?url=https://ranzcr.com/fhir/ValueSet/radiology-referral-1",
+    
+    // Call the FHIR API
+    response = Json.Document(Web.Contents(expansionUrl)),
+    
+    // Navigate to the concepts in the expansion
+    expansion = response[expansion],
+    contains = expansion[contains],
+    
+    // Extract just the codes into a list
+    codeList = List.Transform(contains, each [code])
+in
+    codeList
