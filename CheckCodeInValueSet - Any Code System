@@ -1,0 +1,28 @@
+let
+    CheckCodeInValueSet = (code as text, codeSystem as text, valueSetUrl as text) as text =>
+        let
+            // Build the URL for FHIR $validate-code operation
+            baseUrl = "https://tx.ontoserver.csiro.au/fhir/ValueSet/$validate-code",
+            
+            fullUrl = baseUrl & 
+                      "?url=" & Uri.EscapeDataString(valueSetUrl) & 
+                      "&code=" & Uri.EscapeDataString(code) & 
+                      "&system=" & Uri.EscapeDataString(codeSystem),
+            
+            // Make the API call
+            response = try Json.Document(Web.Contents(fullUrl)) otherwise null,
+            
+            // Extract the result parameter
+            result = if response = null then 
+                        "Error" 
+                     else 
+                        let
+                            parameters = response[parameter],
+                            resultParam = List.First(List.Select(parameters, each [name] = "result")),
+                            isInValueSet = resultParam[valueBoolean]
+                        in
+                            if isInValueSet = true then "Yes" else "No"
+        in
+            result
+in
+    CheckCodeInValueSet
