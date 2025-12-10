@@ -1,0 +1,15 @@
+let
+    CheckInValueSet = (snomedCode as text) as text =>
+        let
+            // Reference the ValueSet codes we loaded
+            validCodes = ValueSetCodes,
+            
+            // Check if the code is in the list
+            isValid = List.Contains(validCodes, snomedCode),
+            
+            // Return Yes/No
+            result = if isValid then "Yes" else "No"
+        in
+            result
+in
+    CheckInValueSet
