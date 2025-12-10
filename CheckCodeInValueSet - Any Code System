@@ -26,3 +26,5 @@ let
             result
 in
     CheckCodeInValueSet
+
+//USAGE =CheckCodeInValueSet("123037004", "http://snomed.info/sct", "https://ranzcr.com/fhir/ValueSet/radiology-referral-1")
